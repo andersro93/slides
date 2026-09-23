@@ -1,0 +1,85 @@
+# GoReleaser owns everything downstream of a version tag: the per-arch
+# images + multi-arch manifest on ghcr.io and the GitHub Release with a
+# Conventional-Commits changelog. The version DECISION stays outside (svu, in
+# release.yml).
+#
+# Local dry run: `goreleaser release --snapshot --clean`.
+version: 2
+
+project_name: slides
+
+# Not ./dist: the repo's own build outputs (dist/app, dist/server) live there.
+dist: dist/goreleaser
+
+before:
+  hooks:
+    # Frontend build into the go:embed directory.
+    - bash scripts/embed.sh
+
+builds:
+  - id: slides
+    dir: apps/server
+    main: ./cmd/slides
+    binary: slides
+    env:
+      - CGO_ENABLED=0
+    goos: [linux]
+    goarch: [amd64, arm64]
+    flags: [-trimpath]
+    ldflags:
+      - -s -w -X github.com/andersro93/slides/server/internal/buildinfo.Version={{ .Version }}
+
+# The image is the product. Binaries are built (the image COPYs them) but
+# not attached to the release.
+release:
+  github:
+    owner: andersro93
+    name: slides
+  skip_upload: true
+  footer: |
+    **Container image:** `ghcr.io/andersro93/slides:{{ .Version }}` (linux/amd64 + linux/arm64)
+
+# Same COPY-only Dockerfile as everywhere else; GoReleaser's build context
+# holds the binaries at linux/<arch>/slides, hence BINARY_ROOT=.
+dockers_v2:
+  - images:
+      - ghcr.io/andersro93/slides
+    tags:
+      - "{{ .Version }}"
+      - "{{ .Major }}.{{ .Minor }}"
+      - "{{ .Major }}"
+      - latest
+      - sha-{{ .FullCommit }}
+    dockerfile: Dockerfile
+    platforms:
+      - linux/amd64
+      - linux/arm64
+    build_args:
+      BINARY_ROOT: "."
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - "^docs"
+      - "^test"
+      - "^chore"
+      - "^ci"
+      - "^style"
+      - Merge pull request
+      - Merge branch
+  groups:
+    - title: Features
+      regexp: '^.*?feat(\([[:word:]]+\))??!?:.+$'
+      order: 0
+    - title: Bug fixes
+      regexp: '^.*?fix(\([[:word:]]+\))??!?:.+$'
+      order: 1
+    - title: Performance
+      regexp: '^.*?perf(\([[:word:]]+\))??!?:.+$'
+      order: 2
+    - title: Other
+      order: 999
+
+snapshot:
+  version_template: "{{ incpatch .Version }}-snapshot.{{ .ShortCommit }}"

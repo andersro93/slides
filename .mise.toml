@@ -1,0 +1,52 @@
+# Toolchain pin — the single source of truth for dev AND CI. `mise install`
+# gives everyone the same Go + Bun + release tooling; CI installs from this
+# same file via jdx/mise-action (only the subset each job needs).
+[tools]
+go = "1.27.1"
+bun = "1.4"
+"aqua:goreleaser/goreleaser" = "2.18.0"
+"aqua:golangci/golangci-lint" = "2.13.2"
+"aqua:caarlos0/svu" = "3.4.1"
+
+# ─── Tasks ────────────────────────────────────────────────────────────────
+# `mise run <task>`
+
+[tasks.dev]
+description = "Author locally on :3000 (DECKS_DIR=<folder>, default ./examples); decks reload on save"
+run = "bash scripts/dev.sh"
+
+[tasks.validate]
+description = "Check a presentations folder: mise run validate [dir] (default ./examples)"
+usage = 'arg "[dir]" help="presentations folder" default="examples"'
+run = 'd="$(cd "${usage_dir:-examples}" && pwd)" && cd apps/server && go run ./cmd/slides validate "$d"'
+
+
+[tasks.test]
+description = "Go + frontend unit tests"
+run = [
+  "cd apps/server && go test -race -count=1 ./...",
+  "bun run test",
+]
+
+[tasks.check]
+description = "Lint + typecheck, both languages, and the GoReleaser config"
+run = [
+  "bun run check",
+  "cd apps/server && golangci-lint run",
+  "goreleaser check",
+]
+
+[tasks.artifacts]
+description = "Frontend embedded → dist/server/linux/<arch>/slides"
+run = "bash scripts/build-artifacts.sh"
+
+[tasks.image]
+description = "Multi-arch image via buildx (runs artifacts first)"
+run = "bash scripts/build-image.sh"
+
+[tasks.e2e]
+description = "Playwright against a local server (builds the frontend first)"
+run = [
+  "bun run build",
+  "cd e2e && bunx playwright test",
+]

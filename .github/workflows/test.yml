@@ -1,0 +1,57 @@
+name: Tests
+
+# The single definition of "the suite is green": lint, typecheck, frontend
+# tests, presentation validation, the GoReleaser config, Go lint and Go
+# tests. Reusable — called by ci.yml (every PR) and release.yml (every push
+# to main), so the gate is defined once and cannot drift between the two.
+
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      # Toolchain from .mise.toml — the same pins developers get locally.
+      - uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4.3.0
+        with:
+          # mise itself, pinned like every other tool.
+          version: 2026.9.1
+          install_args: "go bun aqua:goreleaser/goreleaser aqua:golangci/golangci-lint"
+
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            ~/go/pkg/mod
+            ~/.cache/go-build
+          key: ${{ runner.os }}-go-${{ hashFiles('apps/server/go.sum') }}
+          restore-keys: ${{ runner.os }}-go-
+
+      - name: Install
+        run: bun install --frozen-lockfile
+
+      - name: Lint + typecheck
+        run: bun run check
+
+      - name: Frontend tests
+        run: bun run test
+
+      # The example decks; also covered by a Go test, but this prints every
+      # deck and every problem in one readable list.
+      - name: Validate examples
+        run: cd apps/server && go run ./cmd/slides validate ../../examples
+
+      # The release pipeline's config is code too.
+      - name: GoReleaser config check
+        run: goreleaser check
+
+      - name: Go lint
+        run: cd apps/server && golangci-lint run
+
+      - name: Go tests
+        run: cd apps/server && go test -race -count=1 ./...

@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no"
+    />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="theme-color" content="#0f1117" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <title>Remote</title>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <script type="module" src="/src/remote.ts"></script>
+  </head>
+  <body>
+    <div class="screen" id="message" hidden>
+      <p id="message-text"></p>
+    </div>
+
+    <div class="remote" id="remote" hidden>
+      <header>
+        <span class="conn" id="conn" role="img" aria-label="Connecting"></span>
+        <span class="position" id="position">–</span>
+        <button type="button" class="timer" id="timer" aria-label="Start or pause timer">00:00</button>
+        <button type="button" class="reset" id="timer-reset" aria-label="Reset timer" hidden>↺</button>
+        <span class="clock" id="clock"></span>
+      </header>
+
+      <p class="banner" id="banner" hidden></p>
+
+      <section class="now">
+        <h1 id="title">Connecting…</h1>
+      </section>
+
+      <section class="notes" id="notes-wrap">
+        <div class="notes-tools">
+          <span>Notes</span>
+          <button type="button" id="smaller" aria-label="Smaller notes">A−</button>
+          <button type="button" id="larger" aria-label="Larger notes">A+</button>
+        </div>
+        <div class="notes-body" id="notes"></div>
+      </section>
+
+      <p class="next" id="next"></p>
+
+      <nav class="controls">
+        <button type="button" class="secondary" data-action="pause" id="pause">Blackout</button>
+        <button type="button" class="secondary" data-action="overview" id="overview">Overview</button>
+        <button type="button" class="prev" data-action="prev" aria-label="Previous">‹</button>
+        <button type="button" class="next-btn" data-action="next" aria-label="Next">Next ›</button>
+      </nav>
+    </div>
+  </body>
+</html>

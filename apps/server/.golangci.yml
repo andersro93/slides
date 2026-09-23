@@ -1,0 +1,11 @@
+# golangci-lint, run from apps/server (CI: .github/workflows/test.yml).
+# The default linter set (errcheck, govet, ineffassign, staticcheck, unused)
+# plus gofmt — same stance as pjokk: a gate that is green the day it lands.
+version: "2"
+
+linters:
+  default: standard
+
+formatters:
+  enable:
+    - gofmt

@@ -1,0 +1,83 @@
+// "ros" — the default theme, compiled from reveal's own theme template
+// rather than layered on a stock theme: the stock themes each inline their
+// fonts as base64 (~430 kB gzipped), which this theme does not use. Inter
+// ships in the bundle, so a deck looks the same behind a corporate proxy
+// that blocks Google Fonts. `reveal-theme` is an alias (vite.config.ts) for
+// reveal.js/css/theme, which the package does not export.
+@use "sass:color";
+@use "@fontsource-variable/inter";
+@use "reveal-theme/template/mixins" as mixins;
+
+$accent: #7dd3fc;
+$font: "'Inter Variable', system-ui, -apple-system, 'Segoe UI', sans-serif";
+
+@use "reveal-theme/template/settings" with (
+  $background: #0f1117,
+  $background-color: #0f1117,
+
+  $main-font: $font,
+  $main-font-size: 40px,
+  $main-color: #e6e4e0,
+
+  $heading-color: #fff,
+  $heading-font: $font,
+  $heading-font-weight: 700,
+  $heading-text-transform: none,
+  $heading-letter-spacing: -0.02em,
+  $heading-line-height: 1.15,
+  $heading1-size: 2.2em,
+  $heading2-size: 1.5em,
+  $heading3-size: 1.2em,
+  $heading4-size: 1em,
+
+  $code-font: "ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, Consolas, monospace",
+
+  $link-color: $accent,
+  $link-color-hover: color.scale($accent, $lightness: 45%),
+  $selection-color: #fff,
+  $selection-background-color: #0369a1
+);
+
+@use "reveal-theme/template/theme";
+
+// Dark text on slides with a light data-background.
+@include mixins.light-bg-text-color(#1b1d22);
+
+.reveal p,
+.reveal li {
+  line-height: 1.4;
+}
+
+.reveal :not(pre) > code {
+  padding: 0.08em 0.3em;
+  border-radius: 0.2em;
+  background: rgb(255 255 255 / 0.08);
+  font-size: 0.85em;
+}
+
+.reveal pre {
+  width: 100%;
+  box-shadow: none;
+  border-radius: 10px;
+  overflow: hidden;
+  font-size: 0.5em;
+}
+
+.reveal blockquote {
+  width: 80%;
+  padding: 0.4em 0.9em;
+  border-left: 4px solid $accent;
+  background: rgb(255 255 255 / 0.04);
+  box-shadow: none;
+  font-style: normal;
+}
+
+.reveal .progress {
+  color: $accent;
+}
+
+.reveal .slide-number {
+  background: transparent;
+  color: rgb(255 255 255 / 0.4);
+  font-family: var(--r-main-font);
+}

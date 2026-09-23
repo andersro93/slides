@@ -1,0 +1,65 @@
+# Example deployment behind Cloudflare Tunnel (cloudflared).
+#
+#   TUNNEL_TOKEN=… docker compose -f deploy/compose.yaml up -d
+#
+# In the Cloudflare dashboard, give the tunnel a public hostname
+# slides.ros-nett.com → http://slides:3000. WebSockets (the phone remote)
+# work through tunnels without extra settings.
+#
+# The presentations are a folder mounted read-only at /decks. The server
+# rescans it every 5 s (RELOAD_INTERVAL); `docker compose kill -s HUP slides`
+# picks changes up immediately. A deck that breaks keeps serving its last
+# good version, and the problem is logged.
+#
+# Option A (below): a folder on the host — edit it any way you like
+# (rsync, Syncthing, an editor over SSH).
+#
+# Option B: a private git repository, pulled by git-sync. Replace the
+# `./presentations` volume with the commented lines.
+services:
+  slides:
+    image: ghcr.io/andersro93/slides:latest
+    restart: unless-stopped
+    environment:
+      # Cloudflare puts the visitor's address here. Trusting it is safe only
+      # because the service publishes no ports: the tunnel is the one way in.
+      CLIENT_IP_HEADER: CF-Connecting-IP
+      # Option B: git-sync keeps /git/current pointing at the latest checkout.
+      # DECKS_DIR: /git/current
+    volumes:
+      - ./presentations:/decks:ro
+      # Option B (instead of the line above):
+      # - decks:/git:ro
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    cap_drop: [ALL]
+
+  # Option B:
+  # git-sync:
+  #   image: registry.k8s.io/git-sync/git-sync:v4.7.1
+  #   restart: unless-stopped
+  #   command:
+  #     - --repo=git@github.com:andersro93/presentations.git
+  #     - --ref=main
+  #     - --root=/git
+  #     - --link=current
+  #     - --period=60s
+  #     - --ssh-key-file=/etc/git-secret/ssh
+  #     - --ssh-known-hosts-file=/etc/git-secret/known_hosts
+  #   volumes:
+  #     - decks:/git
+  #     - ./deploy-key:/etc/git-secret/ssh:ro   # a read-only deploy key
+  #     - ./known_hosts:/etc/git-secret/known_hosts:ro   # ssh-keyscan github.com
+
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    restart: unless-stopped
+    command: tunnel --no-autoupdate run
+    environment:
+      TUNNEL_TOKEN: ${TUNNEL_TOKEN:?set TUNNEL_TOKEN}
+    depends_on: [slides]
+
+# Option B:
+# volumes:
+#   decks:

@@ -1,0 +1,142 @@
+/* The app's own chrome on top of a deck: load errors, the pairing dialog
+   and toasts. Deliberately independent of the deck's theme. */
+@import "./ui.css";
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+}
+
+.deck-message {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  margin: 0;
+  padding: 16px;
+  background: var(--bg);
+  color: var(--text);
+  font: 18px / 1.5 var(--font);
+  text-align: center;
+}
+
+.deck-message[hidden] {
+  display: none;
+}
+
+.pairing {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: rgb(0 0 0 / 0.6);
+  backdrop-filter: blur(6px);
+  font-family: var(--font);
+}
+
+.pairing[hidden] {
+  display: none;
+}
+
+.pairing-card {
+  width: min(420px, 100%);
+  padding: 28px;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  background: var(--surface);
+  color: var(--text);
+  text-align: center;
+  box-shadow: 0 30px 80px rgb(0 0 0 / 0.5);
+}
+
+.pairing-card h2 {
+  margin: 0 0 18px;
+  font-size: 20px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+}
+
+.pairing-qr {
+  width: min(280px, 70vw);
+  margin: 0 auto;
+  padding: 10px;
+  border-radius: 12px;
+  /* QR codes need a light quiet zone whatever the theme. */
+  background: #fff;
+}
+
+.pairing-qr svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.pairing-status {
+  margin: 16px 0 4px;
+  font-weight: 600;
+}
+
+.pairing-link {
+  display: inline-block;
+  max-width: 100%;
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pairing-hint {
+  margin: 12px 0 18px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.pairing-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
+
+.pairing-actions button {
+  padding: 9px 14px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface-2);
+  color: var(--text);
+  font: 500 14px var(--font);
+  cursor: pointer;
+}
+
+.pairing-actions button:hover {
+  border-color: var(--accent);
+}
+
+.pairing-actions kbd {
+  margin-left: 4px;
+  color: var(--muted);
+  font: inherit;
+  font-size: 12px;
+}
+
+.deck-toast {
+  position: fixed;
+  bottom: 28px;
+  left: 50%;
+  z-index: 100;
+  padding: 10px 16px;
+  border-radius: 999px;
+  background: rgb(20 22 30 / 0.9);
+  color: #fff;
+  font: 500 15px var(--font);
+  transform: translateX(-50%);
+  transition: opacity 0.5s;
+}
+
+.deck-toast.out {
+  opacity: 0;
+}

@@ -1,0 +1,177 @@
+name: CI
+
+# The PR gate: the full suite (test.yml), then the image built once from
+# native artifacts, smoke-tested, driven through a real browser, and pushed
+# as a semver-prerelease preview. Pushes to main are release.yml's business:
+# merging IS releasing.
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+# A force-push obsoletes the running check.
+concurrency:
+  group: ci-${{ github.head_ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    uses: ./.github/workflows/test.yml
+    permissions:
+      contents: read
+
+  image:
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    env:
+      REGISTRY: ghcr.io
+      IMAGE_NAME: ${{ github.repository }}
+    steps:
+      # Full history and tags: svu computes the upcoming version from
+      # Conventional Commits since the last v* tag.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4.3.0
+        with:
+          version: 2026.9.1
+          install_args: "go bun aqua:caarlos0/svu"
+
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            ~/go/pkg/mod
+            ~/.cache/go-build
+          key: ${{ runner.os }}-go-${{ hashFiles('apps/server/go.sum') }}
+          restore-keys: ${{ runner.os }}-go-
+
+      - name: Install
+        run: bun install --frozen-lockfile
+
+      # What the next release WOULD be, so preview tags sort below it as
+      # prereleases of it (0.2.0-pr.12 < 0.2.0).
+      - name: Compute version
+        id: version
+        run: |
+          tag=$(svu next --v0)
+          short=$(echo "${{ github.event.pull_request.head.sha }}" | cut -c1-7)
+          pr="${{ github.event.pull_request.number }}"
+          {
+            echo "version=${tag#v}"
+            echo "tag=$tag"
+            echo "moving=${tag#v}-pr.${pr}"
+            echo "pinned=${tag#v}-pr.${pr}.${short}"
+          } >> "$GITHUB_OUTPUT"
+
+      # Everything the image COPYs, compiled natively — the Dockerfile is
+      # COPY-only, so nothing ever runs under QEMU.
+      - name: Build artifacts
+        env:
+          SLIDES_VERSION: ${{ steps.version.outputs.pinned }}
+        run: bash scripts/build-artifacts.sh
+
+      - uses: docker/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e # v4.3.0
+
+      - name: Can this run push?
+        id: gate
+        run: |
+          if [ "${{ github.event.pull_request.head.repo.full_name }}" != "${{ github.repository }}" ]; then
+            echo "push=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "push=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Log in to the container registry
+        if: steps.gate.outputs.push == 'true'
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # --load: with setup-buildx's docker-container builder selected, a plain
+      # build would stay in the builder's cache and `docker run` would not
+      # find it.
+      - name: Build image
+        run: docker buildx build --load -t slides:ci .
+
+      # Exactly how production runs it: a read-only mount at /decks, no
+      # other configuration. The e2e fixtures are the decks.
+      - name: Smoke-test the image
+        run: |
+          # Without a mount it must refuse to start, loudly.
+          if docker run --rm slides:ci 2>err.txt; then
+            echo "started without presentations"; exit 1
+          fi
+          grep -q 'mounted' err.txt
+
+          docker run -d --name app -p 3000:3000 \
+            -v "$PWD/e2e/fixtures:/decks:ro" slides:ci
+          for i in $(seq 1 30); do
+            curl -fsS http://localhost:3000/healthz && break
+            sleep 1
+          done
+
+          # The binary is its own healthcheck client (no curl in the image);
+          # run it inside the app's network namespace.
+          docker run --rm --network container:app slides:ci healthcheck
+
+          curl -fsS http://localhost:3000/ | grep -qi '<title>Slides'
+          curl -fsS http://localhost:3000/robots.txt | grep -q 'Disallow: /'
+          curl -fsS http://localhost:3000/e2e-markdown/ | grep -q 'class="reveal"'
+          curl -fsS http://localhost:3000/e2e-markdown/_deck.json | grep -q '"code":"e2e-markdown"'
+          test "$(curl -s -o /dev/null -w '%{http_code}' http://localhost:3000/not-a-real-deck-code/_deck.json)" = "404"
+          docker run --rm slides:ci version | grep -qx "${{ steps.version.outputs.pinned }}"
+          docker run --rm -v "$PWD/e2e/fixtures:/decks:ro" slides:ci validate
+
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ hashFiles('bun.lock') }}
+          restore-keys: ${{ runner.os }}-playwright-
+
+      - name: Install Playwright browser
+        run: bunx playwright install --with-deps chromium
+
+      - name: E2E tests
+        env:
+          E2E_BASE_URL: http://127.0.0.1:3000
+        run: cd e2e && bunx playwright test
+
+      - name: Upload Playwright report
+        if: failure()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: playwright-report
+          path: e2e/playwright-report
+          if-no-files-found: ignore
+
+      # Only after the smoke and e2e tests: an image that does not serve
+      # never reaches the registry, not even as a preview.
+      - name: Push preview image (multi-arch)
+        if: steps.gate.outputs.push == 'true'
+        run: |
+          moving="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.moving }}"
+          pinned="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.pinned }}"
+          docker buildx build --platform linux/amd64,linux/arm64 \
+            -t "$moving" -t "$pinned" --push .
+          {
+            echo "### Preview image"
+            echo
+            echo '```'
+            echo "docker pull $moving"
+            echo '```'
+            echo
+            echo "Also tagged \`$pinned\` (immutable)."
+            echo "Next release would be **${{ steps.version.outputs.tag }}**."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Container logs on failure
+        if: failure()
+        run: docker logs app || true

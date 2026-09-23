@@ -1,0 +1,4 @@
+# The image is COPY-only (see Dockerfile): everything is built natively by
+# scripts/build-artifacts.sh first. The build context is an allowlist.
+*
+!dist/server

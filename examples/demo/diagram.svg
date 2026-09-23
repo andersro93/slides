@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 160" font-family="system-ui, sans-serif" font-size="18">
+  <title>Laptop, server and phone</title>
+  <rect x="10" y="50" width="130" height="60" rx="10" fill="none" stroke="#7dd3fc" stroke-width="3"/>
+  <text x="75" y="86" fill="#e6e4e0" text-anchor="middle">Deck</text>
+  <rect x="195" y="50" width="130" height="60" rx="10" fill="none" stroke="#7dd3fc" stroke-width="3"/>
+  <text x="260" y="86" fill="#e6e4e0" text-anchor="middle">Server</text>
+  <rect x="380" y="50" width="130" height="60" rx="10" fill="none" stroke="#7dd3fc" stroke-width="3"/>
+  <text x="445" y="86" fill="#e6e4e0" text-anchor="middle">Phone</text>
+  <path d="M140 80h55M325 80h55" stroke="#8b90a0" stroke-width="3"/>
+  <text x="352" y="40" fill="#8b90a0" text-anchor="middle" font-size="14">next / prev</text>
+  <text x="167" y="130" fill="#8b90a0" text-anchor="middle" font-size="14">notes</text>
+</svg>

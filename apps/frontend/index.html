@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="theme-color" content="#0f1117" />
+    <title>Slides</title>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <script type="module" src="/src/landing.ts"></script>
+  </head>
+  <body>
+    <main>
+      <form id="open" autocomplete="off" novalidate>
+        <label for="code" class="visually-hidden">Presentation code</label>
+        <input
+          id="code"
+          name="code"
+          type="text"
+          placeholder="Presentation code"
+          autocapitalize="none"
+          autocorrect="off"
+          spellcheck="false"
+          enterkeyhint="go"
+          maxlength="200"
+          aria-describedby="status"
+        />
+        <button type="submit" aria-label="Open presentation">
+          <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
+            <path
+              d="M5 12h13M13 6l6 6-6 6"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
+        </button>
+      </form>
+      <p id="status" role="status" aria-live="polite"></p>
+    </main>
+  </body>
+</html>

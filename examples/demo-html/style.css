@@ -1,0 +1,7 @@
+/* Deck-specific styles, listed under `css:` in the frontmatter. */
+.reveal .big-number {
+  font-size: 4em;
+  font-weight: 800;
+  line-height: 1;
+  color: #0284c7;
+}

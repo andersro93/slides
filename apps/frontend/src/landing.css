@@ -1,0 +1,118 @@
+@import "./ui.css";
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+}
+
+main {
+  width: min(440px, 100%);
+  /* Sit slightly above true centre: it reads as centred, and leaves room
+     for the on-screen keyboard on phones. */
+  margin-bottom: 8vh;
+}
+
+form {
+  position: relative;
+}
+
+input {
+  width: 100%;
+  padding: 18px 64px 18px 22px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+  font: 500 22px / 1.2 var(--font);
+  letter-spacing: 0.01em;
+  outline: none;
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
+}
+
+input::placeholder {
+  color: var(--muted);
+  font-weight: 400;
+}
+
+input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 22%, transparent);
+}
+
+button {
+  position: absolute;
+  top: 50%;
+  right: 10px;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: 10px;
+  background: var(--accent);
+  color: var(--on-accent);
+  cursor: pointer;
+  transform: translateY(-50%);
+  transition:
+    background 0.15s,
+    opacity 0.15s;
+}
+
+button:hover {
+  background: var(--accent-strong);
+}
+
+button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+form[aria-busy="true"] button {
+  opacity: 0.5;
+  cursor: progress;
+}
+
+#status {
+  min-height: 1.5em;
+  margin: 14px 4px 0;
+  color: var(--danger);
+  font-size: 15px;
+  text-align: center;
+}
+
+.shake {
+  animation: shake 0.35s;
+}
+
+@keyframes shake {
+  20%,
+  60% {
+    transform: translateX(-6px);
+  }
+  40%,
+  80% {
+    transform: translateX(6px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .shake {
+    animation: none;
+  }
+}

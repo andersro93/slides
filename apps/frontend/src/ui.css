@@ -1,0 +1,50 @@
+/* Shared tokens for the app's own screens (landing, remote, deck overlays).
+   Light mode follows the system, except where a page pins data-theme="dark"
+   (the phone remote: a bright screen in a dark room is a distraction). */
+@import "@fontsource-variable/inter";
+
+:root {
+  color-scheme: dark light;
+  --bg: #0f1117;
+  --surface: #171a22;
+  --surface-2: #1f2330;
+  --border: #2b3040;
+  --text: #e6e4e0;
+  --muted: #8b90a0;
+  --accent: #7dd3fc;
+  --accent-strong: #38bdf8;
+  --on-accent: #06202e;
+  --danger: #fca5a5;
+  --ok: #86efac;
+  --radius: 14px;
+  --font: "Inter Variable", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    --bg: #f7f7f5;
+    --surface: #ffffff;
+    --surface-2: #f0f0ec;
+    --border: #dcdcd6;
+    --text: #1b1d22;
+    --muted: #6b6f7a;
+    --accent: #0284c7;
+    --accent-strong: #0369a1;
+    --on-accent: #ffffff;
+    --danger: #b91c1c;
+    --ok: #15803d;
+  }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}

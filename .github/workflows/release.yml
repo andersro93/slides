@@ -1,0 +1,194 @@
+name: Release
+
+# Merging IS releasing: every push to main with releasable commits
+# (feat/fix/perf/breaking since the last tag) tags and publishes the image
+# automatically. Docs/chore/ci-only merges end green without releasing.
+# Presentations are not part of this repo or the image; they are mounted.
+#
+# Manual dispatch remains for:
+#   - dry_run: the full pipeline as a snapshot, nothing pushed or tagged
+#   - allow_major: permit 1.0.0 — a deliberate human act
+#
+# svu computes the version from Conventional Commits; GoReleaser builds and
+# publishes from the tag (multi-arch image + GitHub Release with changelog).
+# The tag comes first; a failed publish deletes it again.
+#
+# It does not roll out: point the deployment at the new tag (or follow
+# `latest`) wherever the container runs.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Compute and build, but do not push or tag"
+        type: boolean
+        default: true
+      allow_major:
+        description: "Permit a 1.0.0 release (breaking changes bump minor while the major is 0)"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+# Rapid merges serialize: the second run computes from the first's tag.
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  version:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.v.outputs.version }}
+      tag: ${{ steps.v.outputs.tag }}
+      releasable: ${{ steps.v.outputs.releasable }}
+      publish: ${{ steps.mode.outputs.publish }}
+      dry: ${{ steps.mode.outputs.dry }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4.3.0
+        with:
+          version: 2026.9.1
+          install_args: "aqua:caarlos0/svu"
+
+      - name: Compute version
+        id: v
+        run: |
+          current=$(svu current)
+          if [ "${{ inputs.allow_major }}" = "true" ]; then
+            tag=$(svu next)
+          else
+            tag=$(svu next --v0)
+          fi
+          version="${tag#v}"
+          releasable=true
+          if [ "$tag" = "$current" ]; then releasable=false; fi
+          {
+            echo "tag=$tag"; echo "version=$version"; echo "releasable=$releasable"
+          } >> "$GITHUB_OUTPUT"
+          {
+            echo "### Version"
+            echo "- current: \`$current\`"
+            echo "- next:    \`$tag\` (releasable: $releasable)"
+          } | tee "$GITHUB_STEP_SUMMARY"
+
+      - name: Decide what this run does
+        id: mode
+        run: |
+          dry=false
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.dry_run }}" = "true" ]; then
+            dry=true
+          fi
+          publish=false
+          if [ "${{ steps.v.outputs.releasable }}" = "true" ] && [ "$dry" = "false" ]; then
+            publish=true
+          fi
+          echo "dry=$dry" >> "$GITHUB_OUTPUT"
+          echo "publish=$publish" >> "$GITHUB_OUTPUT"
+          if [ "$publish" = "false" ] && [ "$dry" = "false" ]; then
+            echo "Nothing releasable since ${{ steps.v.outputs.tag }} — skipping." | tee -a "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Refuse an empty manual release
+        if: github.event_name == 'workflow_dispatch' && steps.v.outputs.releasable != 'true' && steps.mode.outputs.dry != 'true'
+        run: |
+          echo "No feat/fix/perf/breaking commits since the last tag — nothing to release."
+          exit 1
+
+  # The merge commit is not the PR head CI tested; run the suite on exactly
+  # what ships.
+  verify:
+    needs: version
+    if: needs.version.outputs.publish == 'true' || needs.version.outputs.dry == 'true'
+    uses: ./.github/workflows/test.yml
+    permissions:
+      contents: read
+
+  publish:
+    needs: [version, verify]
+    if: needs.version.outputs.publish == 'true' || needs.version.outputs.dry == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # the git tag + the GitHub Release
+      packages: write # ghcr.io
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4.3.0
+        with:
+          version: 2026.9.1
+          install_args: "go bun aqua:goreleaser/goreleaser"
+
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            ~/go/pkg/mod
+            ~/.cache/go-build
+          key: ${{ runner.os }}-go-${{ hashFiles('apps/server/go.sum') }}
+          restore-keys: ${{ runner.os }}-go-
+
+      # GoReleaser's before hook (scripts/embed.sh) builds the frontend.
+      - name: Install
+        run: bun install --frozen-lockfile
+
+      # dockers_v2 needs the docker-container driver for multi-platform
+      # pushes; this action creates and selects it.
+      - uses: docker/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e # v4.3.0
+
+      - name: Log in to the container registry
+        if: needs.version.outputs.publish == 'true'
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: GoReleaser (snapshot)
+        if: needs.version.outputs.dry == 'true'
+        run: goreleaser release --snapshot --clean
+
+      - name: Tag the release
+        if: needs.version.outputs.publish == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag -a "${{ needs.version.outputs.tag }}" -m "${{ needs.version.outputs.tag }}"
+          git push origin "${{ needs.version.outputs.tag }}"
+
+      - name: GoReleaser (publish)
+        if: needs.version.outputs.publish == 'true'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: goreleaser release --clean
+
+      - name: Delete the tag on failure
+        if: failure() && needs.version.outputs.publish == 'true'
+        run: |
+          gh release delete "${{ needs.version.outputs.tag }}" --yes || true
+          git push --delete origin "${{ needs.version.outputs.tag }}" || true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Summary
+        run: |
+          {
+            if [ "${{ needs.version.outputs.dry }}" = "true" ]; then
+              echo "### Dry run — nothing pushed, nothing tagged"
+            else
+              echo "### Released ${{ needs.version.outputs.tag }}"
+            fi
+            echo
+            echo "- image: \`${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ needs.version.outputs.version }}\` (amd64+arm64)"
+          } >> "$GITHUB_STEP_SUMMARY"

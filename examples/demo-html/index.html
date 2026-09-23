@@ -1,0 +1,40 @@
+---
+code: demo-html
+title: An HTML deck
+description: Same tool, written as reveal.js <section> markup.
+theme: white
+css: [style.css]
+reveal:
+  transition: fade
+  slideNumber: false
+---
+<section>
+  <h1>An HTML deck</h1>
+  <p>For when Markdown is not enough.</p>
+  <aside class="notes">Speaker notes go in an aside with class "notes".</aside>
+</section>
+
+<section>
+  <section>
+    <h2>Nested sections</h2>
+    <p>…are vertical slides. Press ↓.</p>
+  </section>
+  <section>
+    <h2>Down here</h2>
+  </section>
+</section>
+
+<section>
+  <h2>Deck styles</h2>
+  <p class="big-number">42</p>
+  <p>From <code>style.css</code> next to <code>index.html</code>.</p>
+</section>
+
+<section data-auto-animate>
+  <h2>Auto-animate</h2>
+  <div style="width: 80px; height: 80px; background: #0284c7; margin: 0 auto"></div>
+</section>
+<section data-auto-animate>
+  <h2>Auto-animate</h2>
+  <div style="width: 320px; height: 80px; background: #0284c7; margin: 0 auto; border-radius: 40px"></div>
+</section>
