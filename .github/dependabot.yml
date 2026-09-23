@@ -20,8 +20,8 @@ updates:
         update-types: [minor, patch]
         patterns: ["*"]
 
-  # The bun workspace (bun.lock) goes through the npm ecosystem.
-  - package-ecosystem: npm
+  # Native bun support: updates package.json and bun.lock together.
+  - package-ecosystem: bun
     directory: /
     schedule:
       interval: weekly
@@ -33,5 +33,11 @@ updates:
   # The distroless base image is pinned by digest in the Dockerfile.
   - package-ecosystem: docker
     directory: /
+    schedule:
+      interval: weekly
+
+  # The example deployment's third-party images, so copies of it stay current.
+  - package-ecosystem: docker-compose
+    directory: /deploy
     schedule:
       interval: weekly

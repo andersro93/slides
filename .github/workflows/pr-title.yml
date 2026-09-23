@@ -1,0 +1,44 @@
+name: PR title
+
+# Pull requests are squash-merged, so the title becomes the commit on main
+# that svu versions from and GoReleaser builds the changelog from. Check it
+# is a Conventional Commit before it can land. Plain pull_request (not
+# pull_request_target): reading the title needs no write access, so forks
+# run it with a read-only token.
+
+on:
+  pull_request:
+    types: [opened, edited, reopened, synchronize]
+
+permissions:
+  pull-requests: read
+
+concurrency:
+  group: pr-title-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  conventional:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: amannn/action-semantic-pull-request@48f256284bd46cdaab1048c3721360e808335d50 # v6.1.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          # The types the release tooling knows (CONTRIBUTING.md).
+          types: |
+            feat
+            fix
+            perf
+            docs
+            test
+            refactor
+            build
+            ci
+            chore
+            style
+            revert
+          requireScope: false
+          subjectPattern: ^(?![A-Z]).+$
+          subjectPatternError: |
+            Start the description with a lowercase letter: "feat: add x", not "feat: Add x".
