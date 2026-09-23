@@ -1,0 +1,37 @@
+name: Deck doesn't render right
+description: A presentation loads, fails validation, or looks wrong.
+labels: [deck]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Check the [troubleshooting section](https://github.com/andersro93/slides/blob/main/docs/authoring.md) of the authoring guide first; `mise run validate` or the `validate` command often explains the problem.
+  - type: textarea
+    id: what
+    attributes:
+      label: What's wrong?
+      description: What you expected to see, and what you see instead. Screenshots help.
+    validations:
+      required: true
+  - type: textarea
+    id: deck
+    attributes:
+      label: A minimal deck that shows it
+      description: The smallest `index.md` or `index.html` (with frontmatter) that reproduces the problem. Replace your real code and content.
+      render: markdown
+    validations:
+      required: true
+  - type: textarea
+    id: validate
+    attributes:
+      label: Output of `validate`
+      render: text
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: Output of `docker run --rm ghcr.io/andersro93/slides version`, or the image tag.
+  - type: input
+    id: browser
+    attributes:
+      label: Browser and OS

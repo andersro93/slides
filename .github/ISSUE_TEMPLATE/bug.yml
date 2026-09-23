@@ -1,0 +1,50 @@
+name: Bug report
+description: The server, the landing page or the phone remote misbehaves.
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What you did, what you expected, and what happened instead.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. docker run …
+        2. Open …
+        3. …
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: Output of `docker run --rm ghcr.io/andersro93/slides version`, or the image tag.
+    validations:
+      required: true
+  - type: dropdown
+    id: where
+    attributes:
+      label: Where does it happen?
+      multiple: true
+      options:
+        - Server / container
+        - Landing page
+        - Deck
+        - Phone remote
+        - "`validate` command"
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      description: Browser and OS, and anything in front of the server (reverse proxy, Cloudflare Tunnel, …).
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs
+      description: Server log lines or browser console errors. Remove deck codes you don't want public.
+      render: text
