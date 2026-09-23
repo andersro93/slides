@@ -3,7 +3,7 @@
 #   TUNNEL_TOKEN=… docker compose -f deploy/compose.yaml up -d
 #
 # In the Cloudflare dashboard, give the tunnel a public hostname
-# slides.ros-nett.com → http://slides:3000. WebSockets (the phone remote)
+# slides.example.com → http://slides:3000. WebSockets (the phone remote)
 # work through tunnels without extra settings.
 #
 # The presentations are a folder mounted read-only at /decks. The server
@@ -40,7 +40,7 @@ services:
   #   image: registry.k8s.io/git-sync/git-sync:v4.7.1
   #   restart: unless-stopped
   #   command:
-  #     - --repo=git@github.com:andersro93/presentations.git
+  #     - --repo=git@github.com:you/presentations.git
   #     - --ref=main
   #     - --root=/git
   #     - --link=current
@@ -53,7 +53,7 @@ services:
   #     - ./known_hosts:/etc/git-secret/known_hosts:ro   # ssh-keyscan github.com
 
   cloudflared:
-    image: cloudflare/cloudflared:latest
+    image: cloudflare/cloudflared:2026.9.1
     restart: unless-stopped
     command: tunnel --no-autoupdate run
     environment:

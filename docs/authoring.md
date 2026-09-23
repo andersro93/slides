@@ -34,7 +34,7 @@ title: Scaling the thing
 ```
 
 The **code** is what you type on the landing page and what ends up in the
-URL: `https://slides.ros-nett.com/kubecon26/`.
+URL: `https://slides.example.com/kubecon26/`.
 
 **3. Write slides.** A line with only `---`, with a blank line above and
 below, starts a new slide:
@@ -63,14 +63,12 @@ docker run --rm -p 3000:3000 -v ~/presentations:/decks:ro -e DEV=1 ghcr.io/ander
 
 Open <http://localhost:3000/kubecon26/>. With `DEV=1` the open deck reloads
 itself every time you save, and a deck with an error explains what is wrong
-instead of just not being found. (The image is private: `docker login
-ghcr.io` once, with a GitHub token that can read packages. With this repo
-checked out, `DECKS_DIR=~/presentations mise run dev` does the same without
-Docker.)
+instead of just not being found. (With this repo checked out,
+`DECKS_DIR=~/presentations mise run dev` does the same without Docker.)
 
 **5. Publish it** by getting the directory into the server's presentations
 folder (see [Publishing](#publishing)). Then open
-`https://slides.ros-nett.com`, type `kubecon26`, and present.
+your server (say `https://slides.example.com`), type `kubecon26`, and present.
 
 ## Publishing
 
