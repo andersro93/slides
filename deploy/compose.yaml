@@ -53,7 +53,7 @@ services:
   #     - ./known_hosts:/etc/git-secret/known_hosts:ro   # ssh-keyscan github.com
 
   cloudflared:
-    image: cloudflare/cloudflared:2026.9.1
+    image: cloudflare/cloudflared:2026.9.3
     restart: unless-stopped
     command: tunnel --no-autoupdate run
     environment:
