@@ -24,6 +24,10 @@
     "@types/node": "^26.6.5",
     "typescript": "^7.0.2"
   },
+  "// overrides": "sass pins its own source-map-js; GHSA-68fv-2mgg-jv7q is fixed in 1.2.2. Drop this once sass's lockfile entry resolves to a fixed version on its own.",
+  "overrides": {
+    "source-map-js": "^1.2.2"
+  },
   "trustedDependencies": [
     "@biomejs/biome",
     "esbuild"
