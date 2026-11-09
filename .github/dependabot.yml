@@ -1,10 +1,16 @@
 # Workflow actions are pinned by commit hash with a trailing version comment;
 # Dependabot updates both. Minor/patch bumps are grouped into one PR per
 # ecosystem; majors arrive individually so their changelogs get read.
+#
+# The explicit lowercase prefix keeps titles as "chore(deps): bump …", which
+# the PR title check requires. Without it Dependabot copies the casing of its
+# earlier commits ("Bump").
 version: 2
 updates:
   - package-ecosystem: github-actions
     directory: /
+    commit-message:
+      prefix: chore(deps)
     schedule:
       interval: weekly
     groups:
@@ -13,6 +19,8 @@ updates:
 
   - package-ecosystem: gomod
     directory: /apps/server
+    commit-message:
+      prefix: chore(deps)
     schedule:
       interval: weekly
     groups:
@@ -23,6 +31,9 @@ updates:
   # Native bun support: updates package.json and bun.lock together.
   - package-ecosystem: bun
     directory: /
+    commit-message:
+      prefix: chore(deps)
+      prefix-development: chore(deps-dev)
     schedule:
       interval: weekly
     groups:
@@ -33,11 +44,15 @@ updates:
   # The distroless base image is pinned by digest in the Dockerfile.
   - package-ecosystem: docker
     directory: /
+    commit-message:
+      prefix: chore(deps)
     schedule:
       interval: weekly
 
   # The example deployment's third-party images, so copies of it stay current.
   - package-ecosystem: docker-compose
     directory: /deploy
+    commit-message:
+      prefix: chore(deps)
     schedule:
       interval: weekly
