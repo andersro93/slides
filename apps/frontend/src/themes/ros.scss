@@ -14,11 +14,9 @@ $font: "'Inter Variable', system-ui, -apple-system, 'Segoe UI', sans-serif";
 @use "reveal-theme/template/settings" with (
   $background: #0f1117,
   $background-color: #0f1117,
-
   $main-font: $font,
   $main-font-size: 40px,
   $main-color: #e6e4e0,
-
   $heading-color: #fff,
   $heading-font: $font,
   $heading-font-weight: 700,
@@ -29,9 +27,7 @@ $font: "'Inter Variable', system-ui, -apple-system, 'Segoe UI', sans-serif";
   $heading2-size: 1.5em,
   $heading3-size: 1.2em,
   $heading4-size: 1em,
-
   $code-font: "ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, Consolas, monospace",
-
   $link-color: $accent,
   $link-color-hover: color.scale($accent, $lightness: 45%),
   $selection-color: #fff,
